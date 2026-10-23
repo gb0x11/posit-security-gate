@@ -1,0 +1,29 @@
+# Tests the gate itself: good fixtures pass, bad fixtures fail, R secret rule is accurate.
+name: self-test
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  gate-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install scanners
+        env:
+          TOOLS_DIR: ${{ runner.temp }}/bin
+        run: |
+          mkdir -p "$TOOLS_DIR"
+          REPORT_DIR="${{ runner.temp }}/warmup" bash scan.sh tests/fixtures/good-python-app >/dev/null || true
+      - name: Run gate self-tests
+        env:
+          TOOLS_DIR: ${{ runner.temp }}/bin
+        run: |
+          export PATH="$TOOLS_DIR:$PATH"
+          bash tests/run_tests.sh

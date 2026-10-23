@@ -1,0 +1,4 @@
+{"version":1,"platform":"4.4.3","metadata":{"appmode":"shiny","entrypoint":"app.R"},
+ "packages":{"shiny":{"Source":"CRAN","Repository":"https://cloud.r-project.org","description":{"Package":"shiny","Version":"1.7.0"}},
+             "commonmark":{"Source":"CRAN","Repository":"https://cloud.r-project.org","description":{"Package":"commonmark","Version":"1.8.0"}}},
+ "files":{"app.R":{"checksum":"x"}}}

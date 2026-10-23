@@ -1,0 +1,19 @@
+# gitleaks config for the Posit security gate: all default rules, plus coverage
+# for R code. The default generic rule only recognises "=" / ":" assignments,
+# so R's `password <- "..."` style slipped through untested.
+title = "posit-security-gate"
+
+[extend]
+useDefault = true
+
+[[rules]]
+id = "r-assignment-secret"
+description = "Hardcoded credential assigned in R (<-, <<-, = or Sys.setenv)"
+regex = '''(?i)\b[\w.]*(?:password|passwd|pwd|secret|token|api[_.]?key|apikey|access[_.]?key|private[_.]?key|client[_.]?secret|auth)[\w.]*\s*(?:<<-|<-|=)\s*["']([^"'\s]{8,})["']'''
+secretGroup = 1
+entropy = 3.0
+keywords = ["password", "passwd", "pwd", "secret", "token", "key", "auth"]
+path = '''(?i)\.(?:r|rmd|qmd|rprofile|renviron)$'''
+
+[rules.allowlist]
+regexes = ['''(?i)^(?:x{4,}|\*{4,}|changeme|placeholder|dummy|example|your[_-].*|<[^>]*>)$''']

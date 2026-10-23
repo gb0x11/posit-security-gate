@@ -1,0 +1,34 @@
+# Required workflow: enforced on app repositories by the org ruleset in
+# github/ruleset.json. It runs on every pull request into the protected branch
+# and must pass before the PR can merge, so Connect only ever pulls scanned code.
+#
+# The job name "posit-security-gate" is the check name the Connect guard job
+# looks for on deployed commits - keep the two in sync.
+name: posit-security-gate
+
+on:
+  pull_request:
+  merge_group:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  posit-security-gate:
+    name: posit-security-gate
+    # The gate repo itself holds deliberately bad fixtures; it is tested by self-test.yml.
+    if: github.event.repository.name != 'posit-security-gate'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: gb0x11/posit-security-gate@main
+        with:
+          path: ${{ vars.POSIT_CONTENT_PATH || '.' }}
+          wiz-client-id: ${{ secrets.WIZ_CLIENT_ID }}
+          wiz-client-secret: ${{ secrets.WIZ_CLIENT_SECRET }}
+          wiz-policy: ${{ vars.WIZ_POLICY }}
+          veracode-api-id: ${{ secrets.VERACODE_API_ID }}
+          veracode-api-key: ${{ secrets.VERACODE_API_KEY }}

@@ -1,0 +1,58 @@
+name: Posit security gate
+description: Secret, dependency and SAST checks that must pass before Posit Connect may deploy a repository.
+
+inputs:
+  path:
+    description: Directory to scan (the Connect content root, where manifest.json lives).
+    default: "."
+  require-manifest:
+    description: Fail when manifest.json is missing.
+    default: "true"
+  wiz-client-id:
+    description: Wiz service account client ID. When empty, gitleaks + osv-scanner are used instead.
+    default: ""
+  wiz-client-secret:
+    description: Wiz service account client secret.
+    default: ""
+  wiz-policy:
+    description: Comma-separated Wiz CLI policy names to evaluate.
+    default: ""
+  wiz-scan-cmd:
+    description: Wiz CLI directory-scan command (differs between wizcli versions).
+    default: "wizcli dir scan --path"
+  veracode-api-id:
+    description: Veracode API ID. When empty, SAST is skipped.
+    default: ""
+  veracode-api-key:
+    description: Veracode API key.
+    default: ""
+  veracode-fail-on:
+    description: Veracode Pipeline Scan severities that fail the gate.
+    default: "Very High, High"
+
+runs:
+  using: composite
+  steps:
+    - name: Run security gate
+      shell: bash
+      env:
+        REPORT_DIR: ${{ runner.temp }}/security-reports
+        TOOLS_DIR: ${{ runner.temp }}/posit-gate-bin
+        REQUIRE_MANIFEST: ${{ inputs.require-manifest }}
+        WIZ_CLIENT_ID: ${{ inputs.wiz-client-id }}
+        WIZ_CLIENT_SECRET: ${{ inputs.wiz-client-secret }}
+        WIZ_POLICY: ${{ inputs.wiz-policy }}
+        WIZ_SCAN_CMD: ${{ inputs.wiz-scan-cmd }}
+        VERACODE_API_ID: ${{ inputs.veracode-api-id }}
+        VERACODE_API_KEY: ${{ inputs.veracode-api-key }}
+        VERACODE_FAIL_ON: ${{ inputs.veracode-fail-on }}
+      run: bash "${{ github.action_path }}/scan.sh" "${{ inputs.path }}"
+
+    - name: Upload scan reports
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: posit-security-gate-reports
+        path: ${{ runner.temp }}/security-reports
+        if-no-files-found: ignore
+        retention-days: 30
